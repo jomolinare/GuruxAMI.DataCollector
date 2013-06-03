@@ -1,0 +1,18 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="GuruxAMI.DataCollector.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="AmiHostName" Type="System.String" Scope="User">
+      <Value Profile="(Default)">http://localhost:1337/</Value>
+    </Setting>
+    <Setting Name="AmiDCGuid" Type="System.Guid" Scope="User">
+      <Value Profile="(Default)">00000000-0000-0000-0000-000000000000</Value>
+    </Setting>
+    <Setting Name="UpdateSettings" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="AmiHostPort" Type="System.String" Scope="User">
+      <Value Profile="(Default)">1337</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
