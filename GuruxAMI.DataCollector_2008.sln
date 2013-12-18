@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuruxAMI.DataCollector", "GuruxAMI.DataCollector_2008.csproj", "{9CD1363D-5124-48A4-9E7C-AFE006440547}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuruxAMI.DataCollector_2008", "GuruxAMI.DataCollector_2008.csproj", "{9CD1363D-5124-48A4-9E7C-AFE006440547}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GuruxAMI.Client_2008", "..\GuruxAMI.Client\GuruxAMI.Client_2008.csproj", "{D4D7585E-0FB1-4C5F-BD92-303A5691B3A8}"
 EndProject
