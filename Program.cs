@@ -48,7 +48,38 @@ namespace GuruxAMI.DataCollector
         }
 
         /// <summary>
-        /// 
+        /// Hide password.
+        /// </summary>
+        /// <returns></returns>
+        static string GetPassword()
+        {
+            ConsoleKeyInfo key;
+            string str = "";
+            do
+            {
+                key = System.Console.ReadKey(true);
+                if (key.Key != ConsoleKey.Backspace && key.Key != ConsoleKey.Enter)
+                {
+                    str += key.KeyChar;
+                    System.Console.Write("*");
+                }
+                else
+                {
+                    if (key.Key == ConsoleKey.Backspace && str.Length > 0)
+                    {
+                        str = str.Substring(0, (str.Length - 1));
+                        System.Console.Write("\b \b");
+                    }
+                }
+            }
+            // Stops Receving Keys Once Enter is Pressed
+            while (key.Key != ConsoleKey.Enter);
+            System.Console.WriteLine();
+            return str;
+        }
+
+        /// <summary>
+        /// Start GuruxAMI Data collector as console.
         /// </summary>
         /// <param name="args"></param>
         static void Main(string[] args)
@@ -60,6 +91,7 @@ namespace GuruxAMI.DataCollector
                 Properties.Settings.Default.UpdateSettings = false;
                 Properties.Settings.Default.Save();
             }
+            bool trace = false;
             GXAmiDataCollectorServer collector = null;
             try
             {
@@ -82,9 +114,15 @@ namespace GuruxAMI.DataCollector
                         {
                             GuruxAMI.DataCollector.Properties.Settings.Default.AmiDCGuid = Guid.Empty;
                         }
+                        //Trace messages
+                        if (tag == "t")
+                        {
+                            trace = true;
+                        }
                     }
                 }
-                string host = GuruxAMI.DataCollector.Properties.Settings.Default.AmiHostName;                
+
+                string host = GuruxAMI.DataCollector.Properties.Settings.Default.AmiHostName;
                 if (string.IsNullOrEmpty(host))
                 {
                     ShowHelp();
@@ -96,30 +134,148 @@ namespace GuruxAMI.DataCollector
                 {
                     host = "http://" + host + ":" + GuruxAMI.DataCollector.Properties.Settings.Default.AmiHostPort + "/";
                 }
-                collector = new GXAmiDataCollectorServer(host, guid);
-                collector.OnTasksAdded += new TasksAddedEventHandler(OnTasksAdded);
-                collector.OnTasksClaimed += new TasksClaimedEventHandler(OnTasksClaimed);
-                collector.OnTasksRemoved += new TasksRemovedEventHandler(OnTasksRemoved);
-                collector.OnError += new ErrorEventHandler(OnError);
-                collector.OnAvailableSerialPorts += new AvailableSerialPortsEventHandler(OnAvailableSerialPorts);                
+                Console.WriteLine("Connecting " + host);
+                GXAmiUser user = null;
+                string r, dcName = null;
+                GuruxAMI.Client.GXAmiClient cl = null;
                 if (guid == Guid.Empty)
                 {
-                    Console.WriteLine("Registering Data Collector to GuruxAMI Service with MAC address: " + BitConverter.ToString(GXAmiClient.GetMACAddress()).Replace('-', ':'));
+                    Console.WriteLine("Registering Data Collector to GuruxAMI Service: ");                    
+                    int pos = 0;
+                    do
+                    {
+                        Console.WriteLine("Enter user name:");
+                        string username = Console.ReadLine();
+                        if (username == "")
+                        {
+                            return;
+                        }
+                        Console.WriteLine("Enter password:");
+                        string password = GetPassword();
+                        if (password == "")
+                        {
+                            return;
+                        }
+                        cl = new GXAmiClient(host, username, password);
+                        //Get info from registered user.
+                        try
+                        {
+                            user = cl.GetUserInfo();
+                            break;
+                        }
+                        catch(UnauthorizedAccessException)
+                        {
+                            continue;
+                        }                        
+                    }while(++pos != 3);
+                    //If authorisation failed.
+                    if (user == null)
+                    {
+                        return;
+                    }
+                    Console.WriteLine("Finding data collectors.");                    
+                    GXAmiDataCollector[] dcs = cl.GetDataCollectors();
+                    //If there are existing DCs...
+                    if (dcs.Length != 0)
+                    {
+                        Console.WriteLine("Do you want to register new data collector or bind old? (n/b)");
+                        do
+                        {
+                            r = Console.ReadLine().Trim().ToLower();
+                            if (r == "n" || r == "b")
+                            {
+                                break;
+                            }
+                        }
+                        while (r == "");
+                    }
+                    else
+                    {
+                        r = "n";
+                    }
+                    //Old DC replaced.
+                    if (r == "b")
+                    {
+                        Console.WriteLine("Select data collector number that you want to bind:");
+                        pos = 0;
+                        foreach (GXAmiDataCollector it in dcs)
+                        {
+                            ++pos;
+                            Console.WriteLine(pos.ToString() + ". " + it.Name);
+                        }
+                        do
+                        {
+                            r = Console.ReadLine().Trim();
+                            int sel = 0;
+                            if (int.TryParse(r, out sel) && sel > 0 && sel <= pos)
+                            {
+                                guid = dcs[sel - 1].Guid;
+                                break;
+                            }
+                        }
+                        while (true);
+                    }
+                    else
+                    {
+                        do
+                        {
+                            Console.WriteLine("Enter name of the data collector:");
+                            dcName = Console.ReadLine().Trim();
+                            if (dcName == "")
+                            {
+                                return;
+                            }
+                            if (cl.Search(new string[] { dcName }, ActionTargets.DataCollector, SearchType.Name).Length == 0)
+                            {
+                                break;
+                            }
+                            Console.WriteLine("Name exists. Give new one.");
+                        }
+                        while (true);
+                    }
+                    //Console.WriteLine("Registering Data Collector to GuruxAMI Service with MAC address: " + BitConverter.ToString(GXAmiClient.GetMACAddress()).Replace('-', ':'));
                 }
-                GXAmiDataCollector dc = collector.Init("Unassigned Data collector");
+                collector = new GXAmiDataCollectorServer(host, guid);
+                if (trace)
+                {
+                    collector.OnTasksAdded += new TasksAddedEventHandler(OnTasksAdded);
+                    collector.OnTasksClaimed += new TasksClaimedEventHandler(OnTasksClaimed);
+                    collector.OnTasksRemoved += new TasksRemovedEventHandler(OnTasksRemoved);
+                    collector.OnError += new ErrorEventHandler(OnError);
+                }
+                collector.OnAvailableSerialPorts += new AvailableSerialPortsEventHandler(OnAvailableSerialPorts);
+                GXAmiDataCollector dc = collector.Init(dcName);
+                //If new Data collector is added bind it to the user groups.
+                if (guid == Guid.Empty && cl != null)
+                {
+                    cl.AddDataCollector(dc, cl.GetUserGroups(false));
+                }
                 if (dc != null)
                 {
                     GuruxAMI.DataCollector.Properties.Settings.Default.AmiDCGuid = dc.Guid;
                 }                
-                Console.WriteLine("Data Collector Started.");
+                Console.WriteLine(string.Format("Data Collector '{0}' started.", dc.Name));
+                GuruxAMI.DataCollector.Properties.Settings.Default.Save();
             }
             catch (Exception ex)
-            {
+            {                
                 GuruxAMI.DataCollector.Properties.Settings.Default.AmiDCGuid = Guid.Empty;
-                Console.WriteLine(ex.Message);
-            }            
-            while (Console.ReadKey().Key != ConsoleKey.Enter);
-            GuruxAMI.DataCollector.Properties.Settings.Default.Save();
+                GuruxAMI.DataCollector.Properties.Settings.Default.Save();
+                if (ex is UnauthorizedAccessException)
+                {
+                    Console.WriteLine("Unknown data collector.");
+                }
+                else
+                {
+                    Console.WriteLine(ex.Message);
+                }   
+            }
+            //Wait until user press enter.
+            ConsoleKeyInfo key;
+            while ((key = System.Console.ReadKey()).Key != ConsoleKey.Enter)
+            {
+                System.Console.Write("\b \b");
+            }
             if (collector != null)
             {
                 collector.Dispose();
@@ -155,6 +311,10 @@ namespace GuruxAMI.DataCollector
         {
             foreach(GXAmiTask it in tasks)
             {
+                if (!it.ClaimTime.HasValue)
+                {
+                    object mikko = 1;
+                }
                 Console.WriteLine(string.Format("Task {0} removed.", it.Id));
             }
         }
@@ -181,7 +341,15 @@ namespace GuruxAMI.DataCollector
         {
             foreach (GXAmiTask it in tasks)
             {
-                Console.WriteLine(string.Format("{0} Task {1} Added.", it.TaskType, it.Id));
+                if (it.TaskType == TaskType.MediaWrite)
+                {
+                    string[] tmp = it.Data.Split(Environment.NewLine.ToCharArray());
+                    Console.WriteLine(string.Format("{0} Task {1} Added. {2}", it.TaskType, it.Id, tmp[tmp.Length - 1]));
+                }
+                else
+                {
+                    Console.WriteLine(string.Format("{0} Task {1} Added.", it.TaskType, it.Id));
+                }
             }
         }
     }

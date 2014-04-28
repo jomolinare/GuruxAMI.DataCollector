@@ -25,7 +25,7 @@ namespace GuruxAMI.DataCollector.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:1337/")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://www.gurux.org/GuruxAMI/")]
         public string AmiHostName {
             get {
                 return ((string)(this["AmiHostName"]));
