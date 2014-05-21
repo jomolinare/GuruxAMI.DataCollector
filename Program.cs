@@ -227,13 +227,15 @@ namespace GuruxAMI.DataCollector
                             }
                             if (cl.Search(new string[] { dcName }, ActionTargets.DataCollector, SearchType.Name).Length == 0)
                             {
+                                GXAmiDataCollector tmp = new GXAmiDataCollector(dcName, "", "");
+                                cl.AddDataCollector(tmp, cl.GetUserGroups(false));
+                                guid = tmp.Guid;
                                 break;
                             }
                             Console.WriteLine("Name exists. Give new one.");
                         }
                         while (true);
                     }
-                    //Console.WriteLine("Registering Data Collector to GuruxAMI Service with MAC address: " + BitConverter.ToString(GXAmiClient.GetMACAddress()).Replace('-', ':'));
                 }
                 collector = new GXAmiDataCollectorServer(host, guid);
                 if (trace)
@@ -241,7 +243,7 @@ namespace GuruxAMI.DataCollector
                     collector.OnTasksAdded += new TasksAddedEventHandler(OnTasksAdded);
                     collector.OnTasksClaimed += new TasksClaimedEventHandler(OnTasksClaimed);
                     collector.OnTasksRemoved += new TasksRemovedEventHandler(OnTasksRemoved);
-                    collector.OnError += new ErrorEventHandler(OnError);
+                    collector.OnError += new ErrorEventHandler(OnError);                    
                 }
                 collector.OnAvailableSerialPorts += new AvailableSerialPortsEventHandler(OnAvailableSerialPorts);
                 GXAmiDataCollector dc = collector.Init(dcName);
@@ -259,11 +261,11 @@ namespace GuruxAMI.DataCollector
             }
             catch (Exception ex)
             {                
-                GuruxAMI.DataCollector.Properties.Settings.Default.AmiDCGuid = Guid.Empty;
-                GuruxAMI.DataCollector.Properties.Settings.Default.Save();
                 if (ex is UnauthorizedAccessException)
                 {
                     Console.WriteLine("Unknown data collector.");
+                    GuruxAMI.DataCollector.Properties.Settings.Default.AmiDCGuid = Guid.Empty;
+                    GuruxAMI.DataCollector.Properties.Settings.Default.Save();
                 }
                 else
                 {
@@ -311,10 +313,6 @@ namespace GuruxAMI.DataCollector
         {
             foreach(GXAmiTask it in tasks)
             {
-                if (!it.ClaimTime.HasValue)
-                {
-                    object mikko = 1;
-                }
                 Console.WriteLine(string.Format("Task {0} removed.", it.Id));
             }
         }

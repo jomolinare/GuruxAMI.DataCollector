@@ -18,9 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gurux.Serial_2008", "..\..\GXCom\GXMedias\Gurux.Serial\Development\Gurux.Serial_2008.csproj", "{D07A57D7-F2E7-4A0F-95D1-EF3B1FD688F0}"
 EndProject
 Global
-	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = UnitTest_GuruxDLMS_20087.vsmdi
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
